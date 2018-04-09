@@ -14,8 +14,16 @@ RUN if [ ${CHANGE_SOURCE} = true ]; then \
 
 RUN apk update \
     && apk upgrade \
-    && apk add --no-cache bash \
+    && apk add --no-cache bash openssl \
     && adduser -D -H -u 1000 -s /bin/bash www-data
+    
+# create a folder for the keys
+RUN mkdir /etc/nginx/ssl 2> /dev/null
+
+# generate the keys for your local domain
+RUN openssl genrsa -out "/etc/nginx/ssl/Entrack.key" 2048 \
+    && openssl req -new -key "/etc/nginx/ssl/Entrack.key" -out "/etc/nginx/ssl/Entrack.csr" -subj "/CN=Entrack/O=Entrack/C=UK" \
+    && openssl x509 -req -days 365 -in "/etc/nginx/ssl/Entrack.csr" -signkey "/etc/nginx/ssl/Entrack.key" -out "/etc/nginx/ssl/Entrack.crt"
 
 ARG PHP_UPSTREAM_CONTAINER=php-fpm
 ARG PHP_UPSTREAM_PORT=9000
